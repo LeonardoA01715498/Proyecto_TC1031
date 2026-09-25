@@ -1,4 +1,4 @@
-# Proyecto: Nombre de tu proyecto
+# Proyecto: Requisitos de graduacion
 El proyecto va a analizar los requisitos faltantes de graduacion para alumnos de el Tec de Monterrey y el sistema le debera generar una planeacion o simulacion de toda la
 carrera del estudiante, indicando las materias a cursar y el sersvicio social a cursar en cada semestre, al mismo tiempo el sistema debe de indicar los estudiantes en riesgo
 para los administradores.
