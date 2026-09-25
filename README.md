@@ -44,8 +44,8 @@ Genera el reporte final procesado que incluye únicamente el ID, nombre y el nú
 
 ### SICT0301: Evalúa los componentes
 #### Hace un análisis de complejidad correcto y completo para los algoritmos de ordenamiento usados en el programa.
-Escribe aquí tus argumentos sobre por qué consideras que has desarrrollado esta competencia y dónde se puede observar el desarrollo que mencionas.
+Se expone la complejidad de cada linea relevante de codigo y utilizando dicha descripcion se determina la complejidad de la funcion que se esta usado en el momento. Falta por incorporar un menu de seleccion donde no todo el codigo se va a ejecutar lo cual hara que cada seleccion tenga su propia complejidad.
 
 ### SICT0302: Toma decisiones
 #### Selecciona un algoritmo de ordenamiento adecuado al problema y lo usa correctamente.
-Escribe aquí tus argumentos sobre por qué consideras que has desarrrollado esta competencia y dónde se puede observar el desarrollo que mencionas.
+Considere varias opciones pero la idea final del proyecto es manejar un conjunto grande de datos por lo que resulto mas practico utilizar el quicksort, pero a posterior esto se cambiaria y se utilizara el el metodo Sort de c++.
