@@ -1,0 +1,11 @@
+id,nombre,numero_riesgo,nivel
+78901,Valeria,360.00,Alto
+45678,Ana,190.00,Alto
+67890,Mateo,86.00,Medio
+12345,Leo,80.00,Medio
+56789,Sofia,80.00,Medio
+89012,Gabriel,70.00,Medio
+11223,Santiago,68.57,Medio
+23456,David,66.67,Medio
+34567,Carlo,40.00,Bajo
+90123,Camila,0.00,Completo
