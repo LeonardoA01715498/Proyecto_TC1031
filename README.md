@@ -1,8 +1,8 @@
 # Proyecto: Riesgo de Servicio Social
 
-Para titularse, todo alumno debe completar **480 horas de servicio social** a lo largo de su carrera (8 semestres). Muchos alumnos las dejan para el final y terminan en riesgo de no titularse a tiempo.
+Para titularse, todo alumno debe completar 480 horas de servicio social a lo largo de su carrera (8 semestres). Muchos alumnos las dejan para el final y terminan en riesgo de no titularse a tiempo.
 
-Este programa identifica a esos alumnos. Para cada uno calcula un **factor de riesgo**: las horas de servicio que le faltan por cada semestre que le queda.
+Este programa identifica a esos alumnos. Para cada uno calcula un factor de riesgo: las horas de servicio que le faltan por cada semestre que le queda.
 
 ```
 factor = (480 - horas_cumplidas) / (8 - semestre_actual)
@@ -10,14 +10,14 @@ factor = (480 - horas_cumplidas) / (8 - semestre_actual)
 
 - Si ya cumplió las 480 horas, el factor es 0.
 - Si ya no le quedan semestres, el factor es igual a todas las horas que le faltan.
-- El ritmo normal es 480 / 8 = **60 horas por semestre**, así que un factor mayor a 60 quiere decir que el alumno va atrasado.
+- El ritmo normal es 480 / 8 = 60 horas por semestre, así que un factor mayor a 60 quiere decir que el alumno va atrasado.
 
 Según su factor, cada alumno recibe un nivel de riesgo:
 
-- **Completo:** factor 0.
-- **Bajo:** factor de 1 a 60.
-- **Medio:** factor de 61 a 120.
-- **Alto:** factor mayor a 120.
+- Completo: factor 0.
+- Bajo: factor de 1 a 60.
+- Medio: factor de 61 a 120.
+- Alto: factor mayor a 120.
 
 Con esta información, una coordinación de servicio social puede ordenar a los alumnos de mayor a menor riesgo y atender primero a quienes más lo necesitan.
 
@@ -29,53 +29,65 @@ El programa:
 
 1. Escribía 10 alumnos de ejemplo en `alumnos.csv`.
 2. Leía ese archivo y cargaba los alumnos en un `std::vector<Alumno>`.
-3. Ordenaba el vector de mayor a menor riesgo con un **QuickSort** propio (pivote = último elemento, partición de Lomuto).
+3. Ordenaba el vector de mayor a menor riesgo con un QuickSort propio (pivote = último elemento, partición de Lomuto).
 4. Escribía el resultado en `alumnosRiesgo.csv` con el formato `id,nombre,numero_riesgo`.
 
 ## Descripción del avance 2
 
-En este avance los alumnos se guardan en una **lista doblemente ligada** programada desde cero (`ListaAlumnos.h`). La lista permite:
+En el segundo avance los alumnos se guardaron en una lista doblemente ligada programada desde cero (`ListaAlumnos.h`), que permitía agregarlos al final, buscarlos y eliminarlos por ID, ordenarlos con **Merge Sort y mostrar solo a los que superan un umbral de riesgo.
 
-- agregar alumnos al final;
-- buscarlos y eliminarlos por ID;
-- ordenarlos por riesgo o por ID con **Merge Sort**;
-- mostrar solo a los alumnos que superan un umbral de riesgo.
+Se agregó un menú interactivo en la terminal para cargar los alumnos desde el archivo, consultarlos, agregarlos y eliminarlos (guardando los cambios en `alumnos.csv`), y para generar el reporte `alumnosRiesgo.csv` o leerlo e imprimirlo en pantalla.
 
-El programa se controla con un **menú interactivo** en la terminal. Desde el menú se pueden cargar los alumnos desde el archivo, consultarlos, agregarlos y eliminarlos (los cambios se guardan en `alumnos.csv`), y generar el reporte `alumnosRiesgo.csv` o leerlo e imprimirlo en pantalla.
+## Descripción del avance 3
+
+En este avance se agregó una **estructura de datos no lineal**: un **árbol AVL** (árbol binario de búsqueda auto-balanceado) ordenado por ID (`ArbolAlumnos.h`).
+
+El árbol funciona como **índice** de la lista: cada nodo del árbol guarda el ID del alumno y un apuntador al nodo de la lista donde están sus datos. Así cada estructura hace lo que mejor sabe hacer:
+
+- **La lista doblemente ligada** guarda los datos, se recorre para mostrar o filtrar alumnos y se ordena por riesgo con Merge Sort.
+- **El árbol AVL** se usa para todo lo que depende del ID: buscar un alumno, validar que un ID no esté repetido, eliminar un alumno y recorrer a los alumnos en orden de ID.
+
+La nueva clase `Registro` (`Registro.h`) une las dos estructuras y las mantiene sincronizadas: cada vez que se agrega o elimina un alumno, se hace en las dos al mismo tiempo.
+
+También se mejoró la **escritura de archivos**: `alumnos.csv` se guarda ordenado por ID y los archivos que se reescriben completos se escriben primero en un archivo temporal, para que el original no se pierda si algo falla.
 
 ### Archivos del proyecto
 
-- `Alumno.h`: clase `Alumno`, cálculo del factor y del nivel de riesgo, y criterios de comparación.
-- `ListaAlumnos.h`: lista doblemente ligada; insertar, buscar, eliminar, ordenar (Merge Sort), mostrar y filtrar.
+- `Alumno.h`: clase `Alumno`, cálculo del factor y del nivel de riesgo, y criterio de comparación para ordenar.
+- `ListaAlumnos.h`: lista doblemente ligada; insertar, eliminar un nodo, ordenar (Merge Sort), mostrar y filtrar.
+- `ArbolAlumnos.h`: árbol AVL ordenado por ID; insertar, buscar, eliminar y recorrido inorden.
+- `Registro.h`: une la lista y el árbol y los mantiene sincronizados.
 - `Archivos.h`: lectura y escritura de `alumnos.csv` y `alumnosRiesgo.csv`.
 - `Menu.h`: menú interactivo en la terminal.
 - `main.cpp`: punto de entrada; crea el menú y lo ejecuta.
 - `alumnos.csv`: datos de entrada de los alumnos.
 - `alumnosRiesgo.csv`: reporte que genera el programa.
 
-### Cambios sobre el primer avance
+### Cambios sobre el segundo avance
 
-1. **Cambio de `std::vector` a una lista doblemente ligada.** El programa recibe alumnos uno por uno (desde el archivo o desde el menú) y también los elimina. En la lista, agregar al final es O(1) siempre gracias al apuntador a la cola, sin las realocaciones de `vector`, y eliminar solo reconecta dos apuntadores, sin desplazar a los demás alumnos. Además, el uso principal del programa es recorrer a todos los alumnos, que cuesta O(n) en cualquier estructura.
-2. **Cambio de QuickSort a Merge Sort.** Antes de cambiarlo, comparé con un análisis de complejidad mi QuickSort contra `std::sort` de C++. Mi QuickSort cae en O(n²) cuando los datos ya están ordenados o cuando muchos alumnos tienen el mismo riesgo (por ejemplo, todos los que ya terminaron tienen riesgo 0), y las dos situaciones son comunes en este programa. `std::sort` garantiza O(n log n), pero solo funciona con estructuras de acceso aleatorio, no con una lista ligada. Merge Sort garantiza O(n log n) en todos los casos, en una lista ligada no necesita memoria auxiliar y es estable. La comparación completa está en la sección SICT0302.
-3. **Menú interactivo.** Antes el programa solo generaba los archivos y terminaba. Ahora el usuario elige qué hacer: cargar alumnos, agregar uno, buscarlo, eliminarlo, ver a los alumnos en riesgo o generar y leer el reporte.
-4. **Los archivos ahora se leen, se imprimen y se les agrega información.** Antes los archivos solo se escribían. Ahora el reporte `alumnosRiesgo.csv` se puede leer y mostrar en pantalla, los alumnos nuevos se añaden al final de `alumnos.csv` y, al eliminar uno, el archivo se actualiza.
-5. **Se dejaron de generar alumnos duplicados.** En el primer avance, `main` escribía los mismos 10 alumnos en `alumnos.csv` cada vez que se ejecutaba, así que el archivo se llenaba de registros repetidos. Ahora los datos solo se leen del archivo y la carga ignora los IDs repetidos. Al agregar un alumno desde el menú, también se valida que su ID no exista.
-6. **Análisis de complejidad más explícito.** Cada función indica en el código su complejidad en el mejor caso, el caso promedio y el peor caso, y explica cuándo ocurre cada uno.
-7. **Reorganización del código.** Antes se incluían archivos `.cpp` dentro de otros `.cpp`; ahora el código está organizado en archivos de encabezado (`.h`). Se eliminaron los archivos vacíos (`Carrera.h`, `Menu.cpp`) y el ejecutable `main.exe`, que ya no correspondía al código.
+1. **Se corrigió un error de compilación en `Menu.h`.** Al quitar las líneas separadoras del menú se borró también el `;` del final de la instrucción `std::cout`, y el programa no compilaba. Ahora se compila y se prueba con g++ y con clang antes de entregar.
+2. **Se agregó un árbol AVL como índice por ID.** En el segundo avance, buscar un alumno, validar un ID repetido y eliminar recorrían la lista completa (O(n)). Con el árbol AVL estas operaciones bajan a O(log n). Se eligió AVL y no un árbol binario de búsqueda simple porque los IDs pueden llegar ordenados (por ejemplo, si el archivo ya está ordenado por ID), y en ese caso un árbol simple se vuelve una lista con altura n y todas sus operaciones serían O(n).
+3. **La carga del archivo pasó de O(n²) a O(n log n).** Antes, para no insertar IDs repetidos, cada alumno se comparaba contra todos los ya cargados. Ahora esa validación la hace el árbol en O(log n).
+4. **Eliminar un alumno ahora es O(log n) en memoria.** El árbol encuentra el nodo de la lista en O(log n) y la lista lo desconecta en O(1), sin recorrerla.
+5. **"Mostrar por ID" ya no ordena la lista.** Antes la opción 7 ordenaba la lista por ID con Merge Sort (O(n log n)) y perdía el orden por riesgo. Ahora usa el recorrido inorden del árbol (O(n)), que siempre entrega los alumnos en orden de ID, y no modifica el orden de la lista.
+6. **Escritura de archivos más segura.** `alumnos.csv` y `alumnosRiesgo.csv` se escriben primero en un archivo `.tmp` y solo reemplazan al original si toda la escritura fue correcta. Además, cada escritura se verifica y el menú avisa si falló.
+7. **Nueva opción para guardar.** La opción 11 reescribe `alumnos.csv` con todos los alumnos en memoria, ordenados por ID.
+8. **Corrección del peor caso de `std::sort`.** En el segundo avance escribí que su peor caso era O(n log n) sin explicar la diferencia entre versiones del estándar. La sección SICT0302 lo explica.
+9. **Se agregó la complejidad final del programa** en la sección SICT0301.
 
 ## Instrucciones para compilar el avance de proyecto
 
 Ejecuta el siguiente comando en la terminal:
 
-`g++ main.cpp -std=c++11 -o segundo_avance`
+`g++ main.cpp -std=c++11 -o tercer_avance`
 
 ## Instrucciones para ejecutar el avance de proyecto
 
 Ejecuta el siguiente comando en la terminal:
 
-`./segundo_avance`
+`./tercer_avance`
 
-En Windows: `segundo_avance.exe`
+En Windows: `tercer_avance.exe`
 
 `alumnos.csv` debe estar en la carpeta desde la que se ejecuta el programa.
 
@@ -111,19 +123,18 @@ El programa ignora el encabezado, las líneas vacías o incompletas, los valores
 Al iniciar, el programa carga `alumnos.csv` y muestra el menú:
 
 ```
-==============================================
    RIESGO DE SERVICIO SOCIAL  (10 alumnos en memoria)
-==============================================
   1. Cargar alumnos desde archivo
   2. Mostrar todos los alumnos
   3. Agregar alumno
   4. Buscar alumno por ID
   5. Eliminar alumno por ID
   6. Ordenar y mostrar por riesgo (mayor a menor)
-  7. Ordenar y mostrar por ID
+  7. Mostrar por ID
   8. Ver alumnos en riesgo
   9. Generar reporte alumnosRiesgo.csv
  10. Leer reporte alumnosRiesgo.csv
+ 11. Guardar alumnos en alumnos.csv
   0. Salir
 ```
 
@@ -140,30 +151,35 @@ Todas las entradas se validan: si el usuario escribe texto donde se espera un n�
 ### Salidas en pantalla
 
 - **Opción 1:** cuántos alumnos se cargaron.
-- **Opciones 2, 6 y 7:** lista de alumnos con su factor y nivel de riesgo, en el orden actual, por riesgo o por ID.
+- **Opciones 2 y 6:** lista de alumnos con su factor y nivel de riesgo, en el orden actual o de mayor a menor riesgo.
 - **Opción 3:** confirmación y los datos del alumno agregado.
 - **Opción 4:** los datos del alumno y cuántas horas le faltan.
 - **Opción 5:** confirmación de que se eliminó y se actualizó el archivo.
+- **Opción 7:** lista de alumnos en orden de ID y la altura del árbol AVL.
 - **Opción 8:** solo los alumnos cuyo riesgo supera el umbral, del más al menos riesgoso.
-- **Opción 9:** confirmación de que se generó el reporte.
+- **Opción 9:** confirmación de que se generó el reporte y cuántos alumnos tiene.
 - **Opción 10:** el contenido de `alumnosRiesgo.csv`.
+- **Opción 11:** cuántos alumnos se guardaron en `alumnos.csv`.
 
-Ejemplo de la opción 6:
+Ejemplo de la opción 7:
 
 ```
+Alumnos por ID (recorrido inorden del arbol AVL):
+
 ID      Nombre      Carrera                    Sem  Creditos Horas SS Riesgo   Nivel
 -------------------------------------------------------------------------------------
-78901   Valeria     Biomedica                  7    240      120      360.00   Alto
-45678   Ana         Ingenieria Industrial      6    200      100      190.00   Alto
-67890   Mateo       Mecatronica                3    90       50       86.00    Medio
-12345   Leo         Ingenieria en Sistemas     5    180      240      80.00    Medio
-56789   Sofia       Sistemas Computacionales   8    260      400      80.00    Medio
-89012   Gabriel     Datos                      4    130      200      70.00    Medio
 11223   Santiago    Ingenieria en Sistemas     1    30       0        68.57    Medio
+12345   Leo         Ingenieria en Sistemas     5    180      240      80.00    Medio
 23456   David       Robotica                   2    70       80       66.67    Medio
 34567   Carlo       Datos                      7    250      440      40.00    Bajo
+45678   Ana         Ingenieria Industrial      6    200      100      190.00   Alto
+56789   Sofia       Sistemas Computacionales   8    260      400      80.00    Medio
+67890   Mateo       Mecatronica                3    90       50       86.00    Medio
+78901   Valeria     Biomedica                  7    240      120      360.00   Alto
+89012   Gabriel     Datos                      4    130      200      70.00    Medio
 90123   Camila      Robotica                   8    270      480      0.00     Completo
 Total: 10 alumno(s)
+Altura del arbol AVL: 4
 ```
 
 Ejemplo de la opción 8 con umbral 100:
@@ -189,7 +205,7 @@ ID      Nombre      Carrera                    Sem  Creditos Horas SS Riesgo   N
   90123,Camila,0.00,Completo
   ```
 
-- **`alumnos.csv`**: con la opción 3 se le añade el alumno nuevo al final; con la opción 5 se reescribe sin el alumno eliminado.
+- **`alumnos.csv`**: con la opción 3 se le añade el alumno nuevo al final; con las opciones 5 y 11 se reescribe completo, ordenado por ID.
 
 ## Desarrollo de competencias
 
@@ -217,9 +233,9 @@ El algoritmo de ordenamiento del programa es **Merge Sort** sobre la lista ligad
 Para elegirlo también analicé las otras dos opciones:
 
 - **QuickSort** (el del primer avance): O(n log n) en el mejor caso y en el promedio, pero **O(n²) en el peor caso**, que ocurre cuando el pivote siempre queda en un extremo. Con el pivote en el último elemento, eso pasa cuando los datos ya están ordenados o cuando muchos tienen el mismo valor.
-- **`std::sort`** (Introsort): O(n log n) en el mejor, promedio y peor caso, porque cambia a HeapSort cuando la recursión se hace demasiado profunda.
+- **`std::sort`**: O(n log n) en el mejor caso y en el promedio. Su peor caso se explica en la sección SICT0302.
 
-**Aprendizaje:** en el primer avance solo había indicado la complejidad general de cada función. Ahora, siguiendo la retroalimentación, escribo explícitamente el resultado del mejor, promedio y peor caso, y explico qué situación produce cada uno. Esto se puede ver en los comentarios de `ListaAlumnos.h` y en la lista anterior.
+**Aprendizaje:** en el primer avance solo había indicado la complejidad general de cada función. Ahora escribo explícitamente el resultado del mejor, promedio y peor caso, y explico qué situación produce cada uno. Esto se puede ver en los comentarios de `ListaAlumnos.h` y en la lista anterior.
 
 #### Hace un análisis de complejidad correcto y completo de todas las estructuras de datos y cada uno de sus usos en el programa.
 
@@ -229,16 +245,10 @@ El análisis está comentado en el código junto a cada función. En todos los c
 
 - **`agregarFinal`**
   - Mejor caso: O(1). Promedio: O(1). Peor caso: O(1).
-  - Se tiene un apuntador a la cola, así que no hay que recorrer la lista.
-- **`buscarPorId`**
-  - Mejor caso: O(1). Promedio: O(n). Peor caso: O(n).
-  - Búsqueda secuencial. Mejor caso: el alumno está en la cabeza. Peor caso: está al final o no existe. En promedio revisa n/2 nodos.
-- **`existe`**
-  - Mejor caso: O(1). Promedio: O(n). Peor caso: O(n).
-  - Usa `buscarPorId`.
-- **`eliminarPorId`**
-  - Mejor caso: O(1). Promedio: O(n). Peor caso: O(n).
-  - Localizar el nodo cuesta O(n); desconectarlo cuesta O(1) gracias a los apuntadores `ant` y `sig`.
+  - Se tiene un apuntador a la cola, así que no hay que recorrer la lista. Regresa el nodo creado para que el árbol lo indexe.
+- **`eliminarNodo`**
+  - Mejor caso: O(1). Promedio: O(1). Peor caso: O(1).
+  - Recibe el nodo (que encontró el árbol) y solo reconecta los apuntadores `ant` y `sig` de sus vecinos.
 - **`ordenar` (Merge Sort)**
   - Mejor caso: O(n log n). Promedio: O(n log n). Peor caso: O(n log n).
   - Ver la sección anterior.
@@ -247,67 +257,113 @@ El análisis está comentado en el código junto a cada función. En todos los c
   - Visitan cada nodo una vez.
 - **`mostrarEnRiesgo`**
   - Mejor caso: O(1). Promedio: O(n). Peor caso: O(n).
-  - Si la lista está ordenada por riesgo, se detiene en el primer alumno que no supera el umbral. Mejor caso: el primero ya no lo supera. Peor caso: todos lo superan.
+  - Con la lista ordenada por riesgo, se detiene en el primer alumno que no supera el umbral. Mejor caso: el primero ya no lo supera. Peor caso: todos lo superan.
 - **`limpiar` y destructor**
   - Mejor caso: O(n). Promedio: O(n). Peor caso: O(n).
   - Liberan cada nodo.
 - **`getTam` y `estaVacia`**
-  - Mejor caso: O(1). Promedio: O(1). Peor caso: O(1).
-  - Se guarda un contador `tam`.
+  - O(1) en todos los casos; se guarda un contador `tam`.
+- **Memoria:** O(n) para los nodos.
 
-**Memoria:** O(n) para los nodos.
+**Árbol AVL (`ArbolAlumnos.h`)**
 
-**Clase `Alumno` (`Alumno.h`):** todas sus operaciones (`calcularFactorRiesgoServicio`, `nivelRiesgo`, `toCSV`, `mostrarInformacion`, getters, setters y los comparadores `mayorRiesgo` y `menorId`) son **O(1) en todos los casos**, porque solo trabajan con los atributos del propio alumno.
+En un árbol AVL, la diferencia de altura entre los subárboles izquierdo y derecho de cada nodo es como máximo 1. Eso garantiza que la altura del árbol siempre sea O(log n) (como máximo cerca de 1.44 log₂ n), sin importar el orden en que lleguen los IDs.
+
+- **`rotarDerecha`, `rotarIzquierda` y `balancear`**
+  - O(1) en todos los casos.
+  - Solo reconectan dos o tres apuntadores y actualizan alturas guardadas en los nodos.
+- **`insertar`**
+  - Mejor caso: O(log n). Promedio: O(log n). Peor caso: O(log n).
+  - Baja por un solo camino de la raíz a una hoja (altura O(log n)) y, de regreso, rebalancea cada nodo del camino en O(1). Si el ID ya existe, no lo inserta.
+- **`buscar` y `existe`**
+  - Mejor caso: O(1). Promedio: O(log n). Peor caso: O(log n).
+  - En cada nodo se descarta la mitad del árbol. Mejor caso: el ID está en la raíz. Peor caso: está en una hoja o no existe.
+- **`eliminar`**
+  - Mejor caso: O(log n). Promedio: O(log n). Peor caso: O(log n).
+  - Busca el nodo, lo quita (si tiene dos hijos lo reemplaza por su sucesor, el mínimo del subárbol derecho, que también se encuentra en O(log n)) y rebalancea el camino de regreso.
+- **`recorrerInorden`**
+  - Mejor caso: O(n). Promedio: O(n). Peor caso: O(n).
+  - Visita izquierda, raíz, derecha; pasa una vez por cada nodo y los entrega en orden de ID.
+- **`limpiar` y destructor**
+  - O(n) en todos los casos; liberan cada nodo.
+- **`getTam` y `altura`**
+  - O(1) en todos los casos.
+- **Memoria:** O(n) para los nodos. La recursión de `insertar`, `eliminar` e `inorden` usa O(log n) de pila, porque nunca baja más que la altura del árbol.
+
+**Clase `Registro` (`Registro.h`)**, que une la lista y el árbol:
+
+- **`agregar`:** O(log n) en todos los casos. Validar el ID en el árbol O(log n) + insertar en la lista O(1) + insertar en el árbol O(log n).
+- **`buscar` y `existe`:** mejor caso O(1); promedio y peor caso O(log n). Usan el árbol.
+- **`eliminar`:** O(log n) en todos los casos. Buscar en el árbol O(log n) + quitar del árbol O(log n) + quitar de la lista O(1).
+- **`ordenarPorRiesgo`:** O(n log n) en todos los casos. Merge Sort mueve nodos completos sin copiar datos, así que el árbol sigue apuntando a los nodos correctos y no hay que actualizarlo.
+- **`mostrar` y `mostrarPorId`:** O(n) en todos los casos.
+- **`mostrarEnRiesgo`:** O(n log n) si primero hay que ordenar; si ya estaba ordenada, mejor caso O(1) y peor caso O(n).
+- **`limpiar`:** O(n) en todos los casos.
+
+**Clase `Alumno` (`Alumno.h`):** todas sus operaciones (`calcularFactorRiesgoServicio`, `nivelRiesgo`, `toCSV`, `mostrarInformacion`, getters, setters y el comparador `mayorRiesgo`) son **O(1) en todos los casos**, porque solo trabajan con los atributos del propio alumno.
+
+#### Hace un análisis de complejidad correcto y completo para todos los demás componentes del programa y determina la complejidad final del programa.
 
 **Archivos (`Archivos.h`)**
 
+- **`aEntero` y `reemplazarArchivo`**
+  - O(1) en todos los casos. Convierten un campo de longitud acotada o renombran un archivo.
 - **`cargarAlumnos`**
-  - Mejor caso: O(1). Promedio: O(n²). Peor caso: O(n²).
-  - Leer e insertar cada línea es O(1), pero antes de insertar se verifica que el ID no exista (O(k), con k = alumnos ya cargados). 1 + 2 + … + n = O(n²). Mejor caso: archivo vacío.
-  - Sin esa verificación, la carga sería O(n); se decidió conservarla para proteger la integridad de los datos y evitar registros duplicados. Con el tamaño de un grupo o una generación, el costo es despreciable.
+  - Mejor caso: O(1). Promedio: O(n log n). Peor caso: O(n log n).
+  - Leer y convertir cada línea es O(1); insertar cada alumno en el registro es O(log k), con k = alumnos ya cargados. log 1 + log 2 + … + log n = O(n log n). Mejor caso: archivo vacío.
 - **`agregarAlumnoArchivo`**
-  - Mejor caso: O(1). Promedio: O(1). Peor caso: O(1).
-  - Se abre en modo *append*; no se reescribe el archivo.
+  - O(1) en todos los casos. Se abre en modo *append*; no se reescribe el archivo.
 - **`guardarAlumnos`**
-  - Mejor caso: O(n). Promedio: O(n). Peor caso: O(n).
-  - Reescribe el archivo completo (se usa al eliminar).
+  - O(n) en todos los casos. Recorrido inorden del árbol (ya sale ordenado por ID, no hay que ordenar) y una línea por alumno.
 - **`generarReporteRiesgo`**
-  - Mejor caso: O(n). Promedio: O(n). Peor caso: O(n).
-  - Escribe una línea por alumno.
+  - O(n log n) en todos los casos. Ordena por riesgo con Merge Sort, O(n log n), y escribe una línea por alumno, O(n).
 - **`mostrarReporteRiesgo`**
-  - Mejor caso: O(1). Promedio: O(n). Peor caso: O(n).
-  - Lee e imprime cada línea. Mejor caso: archivo vacío.
+  - Mejor caso: O(1). Promedio: O(n). Peor caso: O(n). Lee e imprime cada línea. Mejor caso: archivo vacío.
 
-**Opciones del menú (`Menu.h`)**
+**Menú (`Menu.h`)**
 
-- **1. Cargar:** mejor caso O(1); promedio y peor caso O(n²), por la verificación de duplicados.
+- `leerEntero`, `leerTexto` y `pausa`: O(1) por cada intento del usuario.
+- **1. Cargar:** limpiar O(n) + cargar O(n log n). Mejor caso O(1); promedio y peor caso O(n log n).
 - **2. Mostrar:** O(n) en todos los casos.
-- **3. Agregar:** mejor caso O(1); promedio y peor caso O(n), por validar que el ID no exista. Escribir en el archivo es O(1).
-- **4. Buscar:** mejor caso O(1); promedio y peor caso O(n).
-- **5. Eliminar:** O(n) en todos los casos, porque el archivo se reescribe completo.
-- **6 y 7. Ordenar y mostrar:** O(n log n) en todos los casos.
-- **8. Alumnos en riesgo:** O(n log n) si hay que ordenar primero. Si la lista ya estaba ordenada por riesgo, O(1) en el mejor caso y O(n) en el peor.
-- **9. Generar reporte:** O(n log n) en todos los casos (ordenar + escribir).
+- **3. Agregar:** O(log n) en todos los casos (validar e insertar en el árbol; escribir en el archivo es O(1)).
+- **4. Buscar:** mejor caso O(1); promedio y peor caso O(log n).
+- **5. Eliminar:** eliminar O(log n) + reescribir el archivo O(n) = O(n) en todos los casos.
+- **6. Ordenar y mostrar por riesgo:** O(n log n) en todos los casos.
+- **7. Mostrar por ID:** O(n) en todos los casos.
+- **8. Alumnos en riesgo:** O(n log n) si hay que ordenar primero; si ya estaba ordenada, mejor caso O(1) y peor caso O(n).
+- **9. Generar reporte:** O(n log n) en todos los casos.
 - **10. Leer reporte:** O(n) en todos los casos.
+- **11. Guardar:** O(n) en todos los casos.
+
+**Complejidad final del programa**
+
+- **Al iniciar**, el programa carga `alumnos.csv`: O(n log n).
+- **Después**, cada opción del menú cuesta como máximo **O(n log n)** (cargar, ordenar por riesgo, ver alumnos en riesgo y generar el reporte). Ninguna opción cuesta más.
+- Si el usuario ejecuta k opciones antes de salir, el programa completo cuesta O(n log n) de la carga inicial más k veces O(n log n): **O(k · n log n)** en el peor caso.
+- Como cada operación está acotada por O(n log n), la **complejidad final del programa es O(n log n) por operación**, dominada por el ordenamiento con Merge Sort y por la carga del archivo al árbol AVL.
+- **Memoria total:** O(n). La lista y el árbol guardan un nodo por alumno cada uno (los datos del alumno solo se guardan una vez, en la lista), y la recursión usa como máximo O(log n) de pila.
+
+Sin el árbol AVL, la carga sería O(n²) y la complejidad final del programa también lo sería. Con el árbol, ninguna operación supera O(n log n).
 
 ### SICT0302: Toma decisiones
 
 #### Selecciona un algoritmo de ordenamiento adecuado al problema y lo usa correctamente.
 
-En el primer avance mencioné que planeaba cambiar de algoritmo. Siguiendo la recomendación, antes de decidir comparé con un análisis de complejidad el QuickSort que había usado contra `std::sort` de C++. También incluí Merge Sort, porque es el que se puede aplicar a una lista ligada.
+Antes de decidir, comparé con un análisis de complejidad el QuickSort que había usado en el primer avance contra `std::sort` de C++. También incluí Merge Sort, porque es el que se puede aplicar a una lista ligada.
 
 - **Mi QuickSort** (pivote = último elemento, partición de Lomuto)
   - Mejor caso: O(n log n). Promedio: O(n log n). Peor caso: **O(n²)**.
   - Memoria extra: O(log n) en promedio, O(n) en el peor caso.
   - No es estable.
   - No funciona en una lista ligada, porque necesita acceso por índice.
-- **`std::sort`** (Introsort)
-  - Mejor caso: O(n log n). Promedio: O(n log n). Peor caso: O(n log n).
+- **`std::sort`**
+  - Mejor caso: O(n log n). Promedio: O(n log n).
+  - Peor caso: **O(n²)**. El estándar original de C++ (C++98/03) solo exigía que `std::sort` hiciera O(n log n) comparaciones **en promedio**, porque está basado en QuickSort; en el peor caso, cuando los pivotes quedan siempre en un extremo, hace O(n²) comparaciones. Desde C++11 el estándar exige O(n log n) también en el peor caso, y compiladores como GCC y Clang lo cumplen con **Introsort**: empieza como QuickSort y, si la recursión se hace demasiado profunda (señal de que se acerca al peor caso), cambia a HeapSort.
   - Memoria extra: O(log n).
   - No es estable.
   - No funciona en una lista ligada, porque necesita iteradores de acceso aleatorio.
 - **Merge Sort en lista ligada**
-  - Mejor caso: O(n log n). Promedio: O(n log n). Peor caso: O(n log n).
+  - Mejor caso: O(n log n). Promedio: O(n log n). Peor caso: O(n log n), garantizado por el propio algoritmo, sin depender de la versión del estándar ni del compilador.
   - Memoria extra: O(log n).
   - **Es estable.**
   - **Funciona en una lista ligada.**
@@ -323,61 +379,83 @@ Para comprobarlo, medí los tres algoritmos con 20,000 alumnos:
 - **Datos ya ordenados:** mi QuickSort **57.7 ms**, `std::sort` 1.9 ms, Merge Sort 2.4 ms.
 - **Todos con el mismo riesgo:** mi QuickSort **166.5 ms**, `std::sort` 1.2 ms, Merge Sort 1.9 ms.
 
-**Decisión:** sí era necesario cambiar de algoritmo, porque mi QuickSort se degrada justo en los casos que más se repiten en este problema. `std::sort` resolvería eso, pero solo funciona con estructuras de acceso aleatorio (`vector`, arreglos) y además no es estable. Como la estructura elegida es una lista ligada, elegí **Merge Sort**, que:
+**Decisión:** sí era necesario cambiar de algoritmo, porque mi QuickSort se degrada justo en los casos que más se repiten en este problema. `std::sort` no sirve porque solo funciona con estructuras de acceso aleatorio (`vector`, arreglos), su peor caso depende de la versión del estándar y no es estable. Como los datos están en una lista ligada, elegí **Merge Sort**, que:
 
 - garantiza O(n log n) en el mejor, promedio y peor caso;
 - en una lista ligada no necesita memoria auxiliar O(n), porque solo reconecta apuntadores;
 - es **estable**, así que los alumnos con el mismo riesgo conservan su orden (además se desempata por ID).
 
-**Uso correcto:** Merge Sort se usa en las opciones 6, 7, 8 y 9 del menú, con dos criterios de comparación (`mayorRiesgo` y `menorId`, en `Alumno.h`). Gracias a eso, la opción 8 puede detener el recorrido en cuanto encuentra al primer alumno que no supera el umbral.
+**Uso correcto:** Merge Sort se usa en las opciones 6, 8 y 9 del menú, con el criterio `mayorRiesgo` (`Alumno.h`). Gracias a eso, la opción 8 puede detener el recorrido en cuanto encuentra al primer alumno que no supera el umbral. Ordenar por ID ya no hace falta, porque el árbol AVL entrega los alumnos en ese orden con su recorrido inorden.
 
-**Aprendizaje:** una decisión sobre un algoritmo se toma comparando opciones, y el análisis de complejidad es uno de los criterios. Al comparar, vi que mi QuickSort no era la mejor opción para estos datos, y que la estructura de datos también limita qué algoritmos se pueden usar.
+**Aprendizaje:** una decisión sobre un algoritmo se toma comparando opciones, y el análisis de complejidad es uno de los criterios. Al comparar, vi que mi QuickSort no era la mejor opción para estos datos, que la estructura de datos también limita qué algoritmos se pueden usar, y que la complejidad de una función de biblioteca puede depender de la versión del estándar.
 
 #### Selecciona una estructura de datos adecuada al problema y la usa correctamente.
 
-Opciones consideradas para guardar a los alumnos:
+El programa hace dos tipos de operaciones muy distintas, y por eso usa dos estructuras:
 
-- **`std::vector`**
-  - Insertar al final: O(1) amortizado, pero O(n) cuando tiene que realocar.
-  - Buscar por ID: O(n).
-  - Eliminar: O(n), porque desplaza los elementos siguientes.
-  - Recorrer: O(n).
-  - Ordenar: O(n log n) con `std::sort`.
-- **Lista doblemente ligada**
-  - Insertar al final: **O(1) siempre**.
-  - Buscar por ID: O(n).
-  - Eliminar: **O(n) para localizar el nodo, O(1) para desconectarlo**.
-  - Recorrer: O(n).
-  - Ordenar: O(n log n) con Merge Sort, sin memoria extra.
+1. **Operaciones sobre todos los alumnos:** mostrarlos, ordenarlos por riesgo, filtrar a los que están en riesgo y generar el reporte.
+2. **Operaciones sobre un solo alumno, por su ID:** buscarlo, validar que no esté repetido al cargar o agregar, y eliminarlo.
 
-Elegí la **lista doblemente ligada** porque se ajusta a cómo se usan los datos en este programa:
+**Estructura lineal: lista doblemente ligada**, para las operaciones del tipo 1.
 
-- **El uso principal es recorrer a todos los alumnos**: mostrarlos, filtrar a los que están en riesgo y generar el reporte. Recorrer es O(n) en cualquier estructura, así que la lista no pierde nada ahí.
-- **Los alumnos llegan uno por uno**, desde el archivo o desde el menú. Con el apuntador a la cola, insertar es O(1) siempre, sin las realocaciones de `vector`.
-- **Al eliminar un alumno** no hay que desplazar a los demás; con los apuntadores `ant` y `sig` el nodo se desconecta en O(1).
-- **Se ordena de forma eficiente** con Merge Sort, que en una lista ligada no necesita un arreglo auxiliar.
-- La desventaja es que no hay acceso por índice, así que la búsqueda por ID es secuencial (O(n)). Para el tamaño de un grupo o una generación es aceptable. Si se necesitaran búsquedas muy frecuentes, una estructura jerárquica (árbol binario de búsqueda) las bajaría a O(log n).
+- Comparada con `std::vector`: insertar al final es O(1) siempre (el vector es O(1) amortizado, pero O(n) cuando realoca) y eliminar un nodo conocido es O(1) (el vector tiene que desplazar los elementos siguientes, O(n)).
+- Recorrer es O(n) en cualquier estructura, así que la lista no pierde nada en las operaciones del tipo 1.
+- Se ordena con Merge Sort sin arreglo auxiliar.
 
-**Uso correcto:** la lista mantiene `cabeza`, `cola` y `tam` consistentes en todas las operaciones, incluido reconstruir los apuntadores `ant` y la `cola` después de ordenar. El destructor libera toda la memoria y la copia está deshabilitada para evitar liberar dos veces el mismo nodo. Se probó con *AddressSanitizer* y *UndefinedBehaviorSanitizer* sin errores. Esto se puede ver en `ListaAlumnos.h`.
+**Estructura no lineal: árbol AVL**, para las operaciones del tipo 2. Opciones consideradas:
+
+- **Seguir buscando en la lista:** buscar, validar y eliminar cuestan O(n). Cargar n alumnos validando duplicados cuesta O(n²).
+- **Árbol binario de búsqueda simple:** O(log n) en promedio, pero **O(n) en el peor caso**, cuando los IDs llegan ordenados (por ejemplo, al cargar un `alumnos.csv` que se guardó ordenado por ID con la opción 11). En ese caso el árbol queda como una lista de altura n.
+- **Árbol AVL:** O(log n) en el peor caso para buscar, insertar y eliminar, porque se rebalancea con rotaciones después de cada cambio. Además, su recorrido inorden entrega a los alumnos ordenados por ID en O(n), sin ordenar nada.
+
+Elegí el **árbol AVL**. Para comprobarlo, medí con 20,000 alumnos:
+
+- **Cargar a los 20,000 alumnos validando IDs repetidos:** 400 ms buscando en la lista contra **6.9 ms** con el árbol AVL.
+- **20,000 búsquedas por ID:** 385 ms en la lista contra **1.9 ms** en el árbol AVL.
+- La altura del árbol con 20,000 alumnos fue **17**; log₂(20,000) ≈ 14.3, así que se mantiene dentro del límite teórico del AVL (≈ 1.44 log₂ n ≈ 20.6).
+
+**Por qué el árbol es un índice y no una copia de los datos:** cada nodo del árbol guarda el ID y un apuntador al nodo de la lista. Así los datos de cada alumno existen una sola vez, la lista y el árbol nunca muestran información distinta, y al eliminar, el árbol entrega directamente el nodo que la lista debe desconectar en O(1).
+
+**Uso correcto:**
+
+- La clase `Registro` es la única que modifica las dos estructuras, y siempre lo hace en las dos al mismo tiempo, así que no pueden quedar desincronizadas.
+- Merge Sort reacomoda los nodos de la lista sin copiar los datos, por lo que los apuntadores del árbol siguen siendo válidos después de ordenar.
+- La lista mantiene `cabeza`, `cola` y `tam` consistentes en todas las operaciones, y el árbol actualiza la altura de cada nodo y se rebalancea después de cada inserción y eliminación.
+- Los destructores liberan toda la memoria y la copia está deshabilitada para evitar liberar dos veces el mismo nodo.
+- Se probó con 200,000 operaciones aleatorias de agregar, eliminar, buscar y ordenar, comparando cada resultado contra `std::set` de C++ y verificando que la altura del árbol se mantuviera dentro del límite del AVL, con *AddressSanitizer* y *UndefinedBehaviorSanitizer* activados y sin errores.
 
 ### SICT0303: Implementa acciones científicas
 
 #### Implementa mecanismos para consultar información de las estructuras correctos.
 
-Desde el menú (`Menu.h`), la lista se puede consultar de varias formas:
+Desde el menú (`Menu.h`), las estructuras se pueden consultar de varias formas:
 
-- **Todos los alumnos** (opción 2, `ListaAlumnos::mostrar`).
-- **Un alumno por ID** (opción 4, `ListaAlumnos::buscarPorId`), incluyendo cuántas horas le faltan.
-- **Ordenados por riesgo o por ID** (opciones 6 y 7, `ListaAlumnos::ordenar`).
-- **Solo los alumnos en riesgo**, según un umbral que elige el usuario (opción 8, `ListaAlumnos::mostrarEnRiesgo`). Aprovecha que la lista está ordenada para detenerse en cuanto un alumno ya no supera el umbral.
+- **Todos los alumnos** en el orden actual de la lista (opción 2, `Registro::mostrar`).
+- **Un alumno por ID** (opción 4, `Registro::buscar`, que usa el árbol AVL), incluyendo cuántas horas le faltan.
+- **Ordenados por riesgo** (opción 6, `Registro::ordenarPorRiesgo`, Merge Sort sobre la lista).
+- **Ordenados por ID** (opción 7, `Registro::mostrarPorId`, recorrido inorden del árbol), junto con la altura del árbol.
+- **Solo los alumnos en riesgo**, según un umbral que elige el usuario (opción 8, `Registro::mostrarEnRiesgo`). Aprovecha que la lista está ordenada para detenerse en cuanto un alumno ya no supera el umbral.
 - **El reporte guardado**, leído desde el archivo (opción 10).
 
-Además, la lista se puede modificar: **agregar** (opción 3, valida que el ID no esté repetido) y **eliminar** (opción 5). Todas las entradas del usuario se validan, así que una consulta con un dato inválido no rompe el programa.
+Además, las estructuras se pueden modificar: **agregar** (opción 3, el árbol valida que el ID no esté repetido) y **eliminar** (opción 5). Todas las entradas del usuario se validan, así que una consulta con un dato inválido no rompe el programa.
 
 #### Implementa mecanismos de lectura de archivos para cargar datos a las estructuras de manera correcta.
 
-- `cargarAlumnos` (`Archivos.h`) lee `alumnos.csv` línea por línea y crea un nodo de la lista por cada alumno.
-- **Es robusta:** ignora el encabezado, las líneas vacías, las líneas incompletas y los valores no numéricos (usa conversión sin excepciones), quita el `\r` de los archivos guardados en Windows y **no inserta IDs repetidos**.
-- Al recargar (opción 1), la lista se vacía primero para no duplicar datos en memoria.
-- **Se escribe en archivos:** un alumno nuevo se **añade** al final de `alumnos.csv`, al eliminar se **reescribe** el archivo y el reporte `alumnosRiesgo.csv` se **genera** ordenado por riesgo.
+- `cargarAlumnos` (`Archivos.h`) lee `alumnos.csv` línea por línea y, por cada alumno, crea un nodo en la lista y lo indexa en el árbol AVL (`Registro::agregar`).
+- **Es robusta:** ignora el encabezado, las líneas vacías, las líneas incompletas y los valores no numéricos (usa conversión sin excepciones), quita el `\r` de los archivos guardados en Windows y **no inserta IDs repetidos**, lo que valida el árbol en O(log n).
+- Al recargar (opción 1), las dos estructuras se vacían primero para no duplicar datos en memoria.
 - **Se lee e imprime un archivo de resultados:** la opción 10 lee `alumnosRiesgo.csv` (`mostrarReporteRiesgo`) y lo muestra en pantalla.
+
+#### Implementa mecanismos de escritura de archivos para guardar los datos de las estructuras de manera correcta.
+
+El programa escribe tres veces en archivos, y cada una toma los datos de la estructura adecuada:
+
+- **Agregar un alumno** (opción 3, `agregarAlumnoArchivo`): añade solo la línea del alumno nuevo al final de `alumnos.csv`, en modo *append*, O(1). Si el archivo no existe, lo crea con su encabezado.
+- **Guardar a todos los alumnos** (opciones 5 y 11, `guardarAlumnos`): reescribe `alumnos.csv` con todos los alumnos en memoria, **ordenados por ID** gracias al recorrido inorden del árbol AVL, O(n). Así, después de eliminar un alumno, el archivo refleja exactamente lo que hay en memoria.
+- **Generar el reporte** (opción 9, `generarReporteRiesgo`): ordena la lista por riesgo con Merge Sort y escribe `alumnosRiesgo.csv` con `id,nombre,numero_riesgo,nivel`, O(n log n).
+
+Para que la escritura sea correcta y segura:
+
+- **Escritura en archivo temporal:** `guardarAlumnos` y `generarReporteRiesgo` escriben primero en `alumnos.csv.tmp` o `alumnosRiesgo.csv.tmp`. Solo si toda la escritura terminó sin errores, el temporal reemplaza al original (`reemplazarArchivo`). Si algo falla a la mitad, se borra el temporal y el archivo original queda intacto.
+- **Verificación:** después de cada escritura se cierra el archivo y se revisa que no haya fallado. Las funciones regresan cuántos alumnos escribieron, o -1 si hubo un error, y el menú le avisa al usuario en cualquiera de los dos casos.
+- **Formato consistente:** todos los alumnos se escriben con `Alumno::toCSV()`, el mismo formato que lee `cargarAlumnos`, y no se permiten comas en los textos. Así, lo que el programa guarda siempre se puede volver a cargar.

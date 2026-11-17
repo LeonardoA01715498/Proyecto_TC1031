@@ -118,7 +118,7 @@ public:
     }
 };
 
-// --- Criterios de comparacion para el ordenamiento --- O(1)
+// Criterio de comparacion para el ordenamiento: mayor riesgo primero, empate por ID - O(1)
 
 inline bool mayorRiesgo(const Alumno& a, const Alumno& b) {
     double ra = a.calcularFactorRiesgoServicio();
@@ -127,8 +127,5 @@ inline bool mayorRiesgo(const Alumno& a, const Alumno& b) {
     return a.getId() < b.getId();
 }
 
-inline bool menorId(const Alumno& a, const Alumno& b) {
-    return a.getId() < b.getId();
-}
 
 #endif // ALUMNO_H

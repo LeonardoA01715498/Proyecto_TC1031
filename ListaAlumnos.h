@@ -10,23 +10,23 @@
  *   - El registro de alumnos es una secuencia que crece (se agregan alumnos nuevos
  *     desde el menu o desde el archivo). Insertar al final es O(1) siempre, sin las
  *     realocaciones que hace std::vector al crecer.
- *   - Eliminar un alumno, una vez localizado, es O(1): solo se reconectan punteros,
- *     no hay que recorrer el resto de elementos como en un arreglo.
+ *   - Eliminar un alumno, una vez localizado por el arbol AVL, es O(1): solo se
+ *     reconectan punteros, no hay que desplazar elementos como en un arreglo.
  *   - El uso principal del programa es RECORRER a todos los alumnos (mostrar, filtrar
  *     los que estan en riesgo, generar el reporte), y eso es O(n) en cualquier estructura.
  *   - Se puede ordenar con Merge Sort sin memoria extra (solo se mueven punteros),
  *     garantizando O(n log n) en todos los casos.
  *
+ * Las busquedas por ID no se hacen aqui sino en el arbol AVL (ArbolAlumnos.h).
+ *
  * Complejidad de cada operacion (n = numero de alumnos en la lista):
  *
  *   Operacion            Mejor caso   Caso promedio   Peor caso
  *   agregarFinal         O(1)         O(1)            O(1)
- *   buscarPorId          O(1)         O(n)            O(n)
- *   existe               O(1)         O(n)            O(n)
- *   eliminarPorId        O(1)         O(n)            O(n)
+ *   eliminarNodo         O(1)         O(1)            O(1)
  *   ordenar (MergeSort)  O(n log n)   O(n log n)      O(n log n)
  *   mostrar / recorrer   O(n)         O(n)            O(n)
- *   mostrarEnRiesgo      O(n)         O(n)            O(n)
+ *   mostrarEnRiesgo      O(1)         O(n)            O(n)
  *   limpiar / destructor O(n)         O(n)            O(n)
  *   getTam / estaVacia   O(1)         O(1)            O(1)
  */
@@ -110,7 +110,9 @@ public:
     int getTam() const { return tam; }
     bool estaVacia() const { return tam == 0; }
 
-    void agregarFinal(const Alumno& a) {
+    // Inserta al final usando el apuntador a la cola: O(1) en todos los casos.
+    // Regresa el nodo creado para que el arbol AVL lo pueda indexar.
+    Nodo* agregarFinal(const Alumno& a) {
         Nodo* nuevo = new Nodo(a);
         if (cabeza == nullptr) {
             cabeza = cola = nuevo;
@@ -120,47 +122,21 @@ public:
             cola = nuevo;
         }
         tam++;
+        return nuevo;
     }
 
     /*
-     * Busqueda secuencial por ID.
-     * Mejor caso: O(1) (el alumno esta en la cabeza).
-     * Promedio: O(n/2) = O(n). Peor caso: O(n) (esta al final o no existe).
-     * Regresa nullptr si no existe.
+     * Quita de la lista un nodo que ya se conoce (lo encuentra el arbol AVL).
+     * Mejor, promedio y peor caso: O(1), solo se reconectan los apuntadores
+     * 'ant' y 'sig' de sus vecinos; no hay que recorrer la lista.
      */
-    Alumno* buscarPorId(int id) const {
-        Nodo* actual = cabeza;
-        while (actual != nullptr) {
-            if (actual->dato.getId() == id) return &actual->dato;
-            actual = actual->sig;
-        }
-        return nullptr;
-    }
-
-    // Mismo costo que buscarPorId: mejor O(1), promedio y peor O(n)
-    bool existe(int id) const { return buscarPorId(id) != nullptr; }
-
-    /*
-     * Elimina al alumno con el ID dado.
-     * Localizarlo: mejor O(1), promedio/peor O(n).
-     * Desconectar el nodo: O(1) gracias a los apuntadores 'ant' y 'sig'.
-     * Total: mejor O(1), promedio y peor O(n).
-     */
-    bool eliminarPorId(int id) {
-        Nodo* actual = cabeza;
-        while (actual != nullptr && actual->dato.getId() != id) {
-            actual = actual->sig;
-        }
-        if (actual == nullptr) return false;
-
-        if (actual->ant != nullptr) actual->ant->sig = actual->sig;
-        else                        cabeza = actual->sig;
-        if (actual->sig != nullptr) actual->sig->ant = actual->ant;
-        else                        cola = actual->ant;
-
-        delete actual;
+    void eliminarNodo(Nodo* nodo) {
+        if (nodo->ant != nullptr) nodo->ant->sig = nodo->sig;
+        else                      cabeza = nodo->sig;
+        if (nodo->sig != nullptr) nodo->sig->ant = nodo->ant;
+        else                      cola = nodo->ant;
+        delete nodo;
         tam--;
-        return true;
     }
 
     /*
@@ -196,10 +172,10 @@ public:
 
     /*
      * Imprime solo a los alumnos cuyo factor de riesgo es mayor que 'umbral'.
-     * Recorre toda la lista: O(n) en mejor, promedio y peor caso.
-     * Si la lista ya esta ordenada por riesgo, los alumnos aparecen del mas
-     * al menos riesgoso y se puede cortar el recorrido al primer alumno que
-     * no supera el umbral (mejor caso O(1)), pero el peor caso sigue siendo O(n).
+     * Si la lista no esta ordenada por riesgo: O(n) en todos los casos.
+     * Si ya esta ordenada, se corta el recorrido en el primer alumno que no
+     * supera el umbral: mejor caso O(1) (el primero ya no lo supera),
+     * promedio y peor caso O(n) (todos lo superan).
      */
     int mostrarEnRiesgo(double umbral, bool ordenadaPorRiesgo) const {
         int encontrados = 0;
